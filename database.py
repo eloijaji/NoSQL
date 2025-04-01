@@ -1,15 +1,25 @@
-#Connexion à MongoDB
 from pymongo import MongoClient
+from neo4j import GraphDatabase
+import config  
 
-MONGO_URI = "mongodb+srv://eloijaji:projetSQL@projetsql.tpeii.mongodb.net/?retryWrites=true&w=majority&appName=ProjetSQL"
-client = MongoClient(MONGO_URI, tls=True, tlsAllowInvalidCertificates=False)
-db = client["movies"]
-print("Collections disponibles : ", db.list_collection_names())
-collection = db["ma_collection"]  
-documents = collection.find()
+# Connexion à MongoDB
+def get_mongo_connection():
+    client = MongoClient(config.MONGO_URI)
+    db = client[config.MONGO_DB_NAME]
+    return db
 
-for doc in documents:
-    print(doc)
+# Connexion à Neo4j
+def get_neo4j_connection():
+    driver = GraphDatabase.driver(config.NEO4J_URI, auth=(config.NEO4J_USERNAME, config.NEO4J_PASSWORD))
+    return driver
 
+# Tests de connexion
+if __name__ == "__main__":
+    # Test MongoDB
+    db = get_mongo_connection()
+    print("Connexion MongoDB réussie :", db.list_collection_names())
 
-#Connexion à Neo4j
+    # Test Neo4j
+    driver = get_neo4j_connection()
+    print("Connexion Neo4j réussie.")
+
