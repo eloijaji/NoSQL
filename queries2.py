@@ -94,7 +94,6 @@ class Queries2:
         """
         return self.execute_query(query)
 
-    
 
     # 21. Quels sont les films les plus "connectés", c’est-à-dire ceux qui ont le plus d’acteurs en commun avec d’autres films ?
     def question_21(self):
@@ -147,91 +146,9 @@ class Queries2:
     # voir fonction create_influence_relationship dans integration.py 
 
     # 25. Quel est le "chemin" le plus court entre deux acteurs donnés ?
-    # def question_25(actor1, actor2):
-    #     driver = get_neo4j_connection()
-
-    #     with driver.session() as session:
-    #         result = session.run(
-    #             """
-    #             MATCH (a1:Actor {name: $actor1}), (a2:Actor {name: $actor2}),
-    #                 p = shortestPath((a1)-[:ACTED_IN*]-(a2))
-    #             RETURN p
-    #             """,
-    #             actor1=actor1,
-    #             actor2=actor2
-    #         )
-            
-    #         # Traiter les résultats
-    #         path = result.single()
-    #         if path:
-    #             # Afficher le chemin trouvé sous forme de liste de nœuds
-    #             return [str(node['name']) for node in path["p"].nodes]
-    #         else:
-    #             return "Aucun chemin trouvé entre ces deux acteurs."
-        
-    # def question_25(self, actor1, actor2):
-    #     with self.driver.session() as session:
-    #         result = session.run(
-    #             """
-    #             MATCH (a1:Actor {name: $actor1}), (a2:Actor {name: $actor2}),
-    #                 p = shortestPath((a1)-[:ACTED_IN*]-(a2))
-    #             RETURN p
-    #             """,
-    #             actor1=actor1,
-    #             actor2=actor2
-    #         )
-
-    # def question_25(self, actor1, actor2):
-    #     with self.driver.session() as session:
-    #         # Exécution de la requête pour obtenir le chemin le plus court
-    #         result = session.run(
-    #             """
-    #             MATCH (a1:Actor {name: $actor1}), (a2:Actor {name: $actor2}),
-    #                 p = shortestPath((a1)-[:ACTED_IN*]-(a2))
-    #             RETURN p
-    #             """,
-    #             actor1=actor1,
-    #             actor2=actor2
-    #         )
-            
-    #         # Récupérer le chemin
-    #         path = result.single()  # Récupère le premier (et probablement seul) résultat
-    #         if path:
-    #             # Extraire les noms des nœuds dans le chemin et les retourner sous forme de liste
-    #             return [str(node['name']) for node in path["p"].nodes]
-    #         else:
-    #             # Retourne un message si aucun chemin n'est trouvé
-    #             return "Aucun chemin trouvé entre ces deux acteurs."
-
-
-    # def question_25(self, actor1, actor2):
-    #     with self.driver.session() as session:
-    #         # Exécution de la requête pour obtenir le chemin le plus court
-    #         result = session.run(
-    #             """
-    #             MATCH (a1:Actor {name: $actor1}), (a2:Actor {name: $actor2}),
-    #                 p = shortestPath((a1)-[:ACTED_IN*]-(a2))
-    #             RETURN p
-    #             """,
-    #             actor1=actor1,
-    #             actor2=actor2
-    #         )
-            
-    #         # Récupérer le chemin
-    #         path = result.single()  # Récupère le premier (et probablement seul) résultat
-    #         if path:
-    #             # Filtrer les nœuds None et extraire les noms des nœuds dans le chemin
-    #             nodes = [str(node['name']) for node in path["p"].nodes if node]
-    #             if nodes:
-    #                 return nodes
-    #             else:
-    #                 return "Aucun chemin valide trouvé entre ces deux acteurs."
-    #         else:
-    #             return "Aucun chemin trouvé entre ces deux acteurs."
-
-
     def question_25(self, actor1, actor2):
         with self.driver.session() as session:
+            # Exécution de la requête pour obtenir le chemin le plus court
             result = session.run(
                 """
                 MATCH (a1:Actor {name: $actor1}), (a2:Actor {name: $actor2}),
@@ -241,15 +158,9 @@ class Queries2:
                 actor1=actor1,
                 actor2=actor2
             )
-            
-            path = result.single()  
+            path = result.single() 
             if path:
-                nodes = []
-                for node in path["p"].nodes:
-                    if node.labels == ['Film']: 
-                        nodes.append(str(node['title']))  
-                    elif node.labels == ['Actor']: 
-                        nodes.append(str(node['name']))  
+                nodes = [str(node['name']) for node in path["p"].nodes if node]
                 if nodes:
                     return nodes
                 else:
@@ -257,13 +168,54 @@ class Queries2:
             else:
                 return "Aucun chemin trouvé entre ces deux acteurs."
 
+
+
     # # 26. Analyser les communautés d’acteurs : Quels sont les groupes d’acteurs qui ont tendance à travailler ensemble ?
     # def question_26(self):
-    #     query = """
-    #     CALL algo.louvain.stream('Actor', 'ACTED_IN', {graph:'movie_graph'})
-    #     YIELD nodeId, community
-    #     MATCH (a:Actor) WHERE ID(a) = nodeId
-    #     RETURN community, COLLECT(a.name) AS actors
-    #     ORDER BY community
-    #     """
-    #     return self.execute_query(query)
+
+
+    # 28: Recommander des films aux utilisateurs en fonction des préférences d’un acteur donnée
+    def question_28(self, actor_name):
+        query = """
+        MATCH (actor:Actor {name: $actor_name})-[:ACTED_IN]->(movie:Film)
+        RETURN DISTINCT movie.title AS recommended_movie LIMIT 10;
+        """
+        
+        with self.driver.session() as session:
+            result = session.run(query, actor_name=actor_name)
+            recommendations = [{"recommended_movie": record["recommended_movie"]} for record in result]
+            
+            if not recommendations:
+                print(f"Aucune recommandation trouvée pour {actor_name}.")
+            else:
+                print(f"Recommandations trouvées pour {actor_name}: {recommendations}")
+            
+            return recommendations
+
+    # 29:  Créer une relation de ”concurrence” entre réalisateurs ayant réalisé des films similaires la même année.
+    def question_29(self):
+        query = """
+        MATCH (d1:Director)-[:DIRECTED]->(f1:Film), (d2:Director)-[:DIRECTED]->(f2:Film)
+        WHERE d1 <> d2 AND f1.year = f2.year
+        MERGE (d1)-[:CONCURRENT]->(d2)
+        RETURN d1.name AS director_1, d2.name AS director_2, f1.year AS year
+        """
+        
+        with self.driver.session() as session:
+            result = session.run(query)
+            return [record for record in result]
+
+    
+    # 30:  identifier les collaborations les plus fréquentes entre réalisateurs et acteurs et analyser si ces collaborations sont associées à un succès commercial ou critique
+    def question_30(self):
+        query = """
+        MATCH (d:Director)-[:DIRECTED]->(f:Film)<-[:ACTED_IN]-(a:Actor)
+        RETURN d.name AS director, a.name AS actor, COUNT(f) AS collaboration_count,
+        AVG(toFloat(f.revenue)) AS avg_revenue, AVG(toFloat(f.metascore)) AS avg_metascore
+        ORDER BY collaboration_count DESC
+        LIMIT 10
+        """
+        
+        with self.driver.session() as session:
+            result = session.run(query)
+            return [record for record in result]

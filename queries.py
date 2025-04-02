@@ -21,7 +21,7 @@ def most_popular_year():
     ]
     result = list(films.aggregate(pipeline))
     if result:
-        print(f"Année avec le plus de films : {result[0]['_id']} ({result[0]['count']} films)")
+      #  print(f"Année avec le plus de films : {result[0]['_id']} ({result[0]['count']} films)")
         return result[0]  
     return None 
 
@@ -31,7 +31,7 @@ def most_popular_year():
 def count_movies_after_1999():
     try:
         count = films.count_documents({"year": {"$gt": 1999}})
-        print(f"Nombre de films après 1999 : {count}")
+     #   print(f"Nombre de films après 1999 : {count}")
         return count  
     except Exception as e:
         print(f"Erreur lors de la récupération des films : {e}")
@@ -299,6 +299,28 @@ def average_runtime_per_decade_chart(db):
     ax.set_ylabel('Durée moyenne des films (minutes)')
     ax.set_title('Durée moyenne des films par décennie')
     st.pyplot(fig)
+
+
+# 27. films ayant des genres en commun mais qui ont des réalisateurs différent
+def question_27():
+        pipeline = [
+            {"$unwind": {"path": "$genre", "preserveNullAndEmptyArrays": True}},  
+            {"$group": {
+                "_id": "$genre",
+                "directors": {"$addToSet": "$Director"}, 
+                "films": {"$push": {"title": "$title", "director": "$Director"}}
+            }},
+            {"$match": {"directors.1": {"$exists": True}}},  
+            {"$sort": {"films": -1}},  
+            {"$limit": 5} 
+        ]
+
+        result = list(films.aggregate(pipeline))
+        
+        if result:
+            return result
+        return "Aucun genre n'est partagé par plusieurs réalisateurs."
+
 
 
 # if __name__ == "__main__":

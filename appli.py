@@ -276,3 +276,48 @@ elif selected_tab == "Neo4j":
 
 if selected_tab == "Transverse":
     st.header("Questions transverses")
+
+    # Question 27: Quels sont les films qui ont des genres en commun mais qui ont des r´ealisateurs diff´erents ?
+    st.subheader("27. films qui ont des genres en commun mais qui ont des réalisateurs différents")
+    result = question_27()
+    if result:
+        for genre_data in result:
+            st.write(f"### Genre : {genre_data['_id']}")
+            for film in genre_data["films"]:
+                st.write(f" - **{film['title']}** (Réalisé par {film['director']})")
+    else:
+        st.write("Aucun film ne correspond à ce critère.")
+
+    
+    # Question 28: Recommander des films aux utilisateurs en fonction des préférences d’un acteur donnée.
+    st.subheader("28. Recommander des films en fonction des préférences d'un acteur")
+    actor_name = st.text_input("Entrez le nom d'un acteur :", "Matthew McConaughey")
+    if st.button("Recommander des films"):      
+            neo4j_driver = get_neo4j_connection()
+            queries_instance = Queries2(neo4j_driver)
+            recommendations = queries_instance.question_28(actor_name)
+            if recommendations:
+              st.write(f"### Films recommandés pour {actor_name} :")
+            for rec in recommendations:
+                st.write(f" **{rec['recommended_movie']}**")
+
+    
+    # Question 29:  Créer une relation de ”concurrence” entre réalisateurs ayant réalisé des films similaires la même année.
+    st.subheader("29.Créer une relation de ”concurrence” entre réalisateurs ayant réalisé des films similaires la même année")
+    st.write("Relation crée")
+
+    # Question 30:  identifier les collaborations les plus fréquentes entre réalisateurs et acteurs et analyser si ces collaborations sont associées à un succès commercial ou critique
+    st.subheader("30. Identifier les collaborations les plus fréquentes entre réalisateurs et acteurs et analyser leur succès commercial ou critique")
+    if st.button("Analyser les collaborations"):
+        neo4j_driver = get_neo4j_connection()
+        queries_instance = Queries2(neo4j_driver)
+        collaborations = queries_instance.question_30()
+        if collaborations:
+            st.write(f"### Collaborations les plus fréquentes et leur succès commercial ou critique :")
+            for collab in collaborations:
+                st.write(f" **{collab['director']}** et **{collab['actor']}** ont collaboré {collab['collaboration_count']} fois.")
+                st.write(f"   - Revenu moyen : {collab['avg_revenue']}")
+                st.write(f"   - Metascore moyen : {collab['avg_metascore']}")
+        else:
+            st.write("Aucune collaboration trouvée.")
+
